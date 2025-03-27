@@ -1,26 +1,42 @@
 // src/App.js
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
+import { 
+  createRoutesFromElements, 
+  createBrowserRouter, 
+  RouterProvider 
+} from "react-router-dom";
 
 import { Login } from './components/auth/Login';
 import { SignUp } from './components/auth/SignUp';
 import TodoList from './components/todo/TodoList';
 
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
+// 添加React Router v7的future flags
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route>
+      <Route path="/" element={<Login />} />
+      <Route path="/signup" element={<SignUp />} />
+      
+      {/* 待办父路由 */}
+      <Route path="/todolist" element={<TodoLayout />}>
+        {/* 默认子路由：查看待办列表 */}
+        <Route index element={<TodoList />} />
+      </Route>
+    </Route>
+  ),
+  {
+    // 添加future flags来消除警告
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true
+    }
+  }
+);
 
-        {/* 待办父路由 */}
-        <Route path="/todolist" element={<TodoLayout />}>
-          {/* 默认子路由：查看待办列表 */}
-          <Route index element={<TodoList />} />
-        </Route>
-      </Routes>
-    </Router>
-  );
+function App() {
+  // 使用新的RouterProvider代替Router
+  return <RouterProvider router={router} />;
 }
 
 /**

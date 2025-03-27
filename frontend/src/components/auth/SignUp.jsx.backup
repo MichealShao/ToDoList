@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../styles/Auth.css";
 import { authAPI } from "../../services/api";
 
 export const SignUp = () => {
   const [formData, setFormData] = useState({
+    name: "",
     username: "",
     email: "",
     password: "",
@@ -15,26 +16,6 @@ export const SignUp = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  // 页面加载时检查是否有登录页传递过来的数据
-  useEffect(() => {
-    const loginFormDataStr = sessionStorage.getItem('loginFormData');
-    if (loginFormDataStr) {
-      try {
-        const loginFormData = JSON.parse(loginFormDataStr);
-        setFormData(prev => ({
-          ...prev,
-          email: loginFormData.email || prev.email,
-          password: loginFormData.password || prev.password,
-          confirmPassword: loginFormData.password || prev.confirmPassword
-        }));
-        // 使用后清除，避免数据泄露
-        sessionStorage.removeItem('loginFormData');
-      } catch (error) {
-        console.error('解析登录表单数据出错:', error);
-      }
-    }
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,7 +31,7 @@ export const SignUp = () => {
     
  
     if (formData.password !== formData.confirmPassword) {
-      setError('密码不匹配');
+      setError('Passwords do not match');
       return;
     }
     
@@ -59,12 +40,14 @@ export const SignUp = () => {
     try {
       // 调试日志
       console.log('Sending registration data:', {
+        name: formData.name,
         username: formData.username,
         email: formData.email,
         password: 'HIDDEN' // 出于安全考虑不记录密码
       });
       
       await authAPI.register({
+        name: formData.name,
         username: formData.username,
         email: formData.email,
         password: formData.password
@@ -72,33 +55,13 @@ export const SignUp = () => {
       
       console.log('Registration successful, attempting login');
     
-      try {
-        console.log('使用注册的email进行自动登录:', formData.email);
-        const loginResponse = await authAPI.login({
-          email: formData.email,
-          password: formData.password
-        });
-        
-        console.log('Login after registration successful:', {
-          hasToken: !!loginResponse.token
-        });
-        
-        // 确保登录成功并有token
-        if (!loginResponse.token) {
-          console.warn('登录成功但没有收到token');
-          setError('注册成功但自动登录失败，请尝试手动登录');
-          setLoading(false);
-          return;
-        }
-        
-        navigate('/todolist');
-      } catch (loginErr) {
-        console.error('Auto login after registration failed:', loginErr);
-        setError('注册成功但自动登录失败，请尝试手动登录');
-        setLoading(false);
-        // 尽管登录失败，但注册成功了，所以我们导航到登录页面
-        navigate('/');
-      }
+      await authAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
+      
+      console.log('Login successful, navigating to todolist');
+      navigate('/todolist');
     } catch (err) {
       console.error('Signup error:', err);
       setLoading(false);
@@ -139,22 +102,38 @@ export const SignUp = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">创建账户</h1>
-          <p className="auth-subtitle">请填写以下信息完成注册</p>
+          <h1 className="auth-title">Create Account</h1>
+          <p className="auth-subtitle">Please fill in the information below to complete registration</p>
         </div>
         
         {error && <div className="auth-error">{error}</div>}
         
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label" htmlFor="username">用户名</label>
+            <label className="form-label" htmlFor="name">Full Name</label>
+            <div className="form-input-container">
+              <input
+                id="name"
+                type="text"
+                name="name"
+                className="form-input"
+                placeholder="Your full name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label" htmlFor="username">Username</label>
             <div className="form-input-container">
               <input
                 id="username"
                 type="text"
                 name="username"
                 className="form-input"
-                placeholder="请选择用户名"
+                placeholder="Choose a username"
                 value={formData.username}
                 onChange={handleChange}
                 required
@@ -163,14 +142,14 @@ export const SignUp = () => {
           </div>
           
           <div className="form-group">
-            <label className="form-label" htmlFor="email">邮箱</label>
+            <label className="form-label" htmlFor="email">Email</label>
             <div className="form-input-container">
               <input
                 id="email"
                 type="email"
                 name="email"
                 className="form-input"
-                placeholder="您的邮箱地址"
+                placeholder="youremail@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -179,7 +158,7 @@ export const SignUp = () => {
           </div>
           
           <div className="form-group">
-            <label className="form-label" htmlFor="password">密码</label>
+            <label className="form-label" htmlFor="password">Password</label>
             <div className="form-input-container">
               <input
                 id="password"
@@ -196,13 +175,13 @@ export const SignUp = () => {
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? "隐藏" : "显示"}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
           
           <div className="form-group">
-            <label className="form-label" htmlFor="confirmPassword">确认密码</label>
+            <label className="form-label" htmlFor="confirmPassword">Confirm Password</label>
             <div className="form-input-container">
               <input
                 id="confirmPassword"
@@ -219,7 +198,7 @@ export const SignUp = () => {
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
-                {showConfirmPassword ? "隐藏" : "显示"}
+                {showConfirmPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
@@ -229,14 +208,14 @@ export const SignUp = () => {
             className="auth-button"
             disabled={loading}
           >
-            {loading ? '注册中...' : '注册'}
+            {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
         
         <div className="auth-footer">
-          已有账户？{" "}
+          Already have an account?{" "}
           <Link to="/" className="auth-link">
-            立即登录
+            Log in now
           </Link>
         </div>
       </div>

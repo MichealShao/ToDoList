@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Create API base configuration
-const API_BASE_URL = 'https://todo-backend-mocha-iota.vercel.app'; // 更新为新的后端API地址
+// Create API base configuration - dynamically select endpoint based on environment
+const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:5001' 
+  : 'https://todo-backend-mocha-iota.vercel.app';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -45,10 +47,32 @@ export const authAPI = {
   // User registration
   register: async (userData) => {
     try {
-      const response = await api.post('/api/register', userData);
+      console.log('API register call with data:', {
+        ...userData,
+        password: '[HIDDEN]' // 不记录密码
+      });
+      
+      // 确保API使用正确的URL
+      const url = '/api/register';
+      console.log('Registration URL:', API_BASE_URL + url);
+      
+      const response = await api.post(url, userData);
+      console.log('Registration response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Registration error:', error.response?.data || error.message);
+      console.error('Registration API error:', error);
+      
+      if (error.response) {
+        console.error('Server response:', {
+          status: error.response.status,
+          data: error.response.data
+        });
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Error setting up request:', error.message);
+      }
+      
       throw error;
     }
   },
@@ -56,14 +80,44 @@ export const authAPI = {
   // User login
   login: async (credentials) => {
     try {
-      const response = await api.post('/api/login', credentials);
+      console.log('API login call with data:', {
+        ...credentials,
+        password: '[HIDDEN]' // 不记录密码
+      });
+      
+      // 确保API使用正确的URL
+      const url = '/api/login';
+      console.log('Login URL:', API_BASE_URL + url);
+      
+      const response = await api.post(url, credentials);
+      console.log('Login response:', {
+        success: true,
+        hasToken: !!response.data.token,
+        tokenLength: response.data.token ? response.data.token.length : 0
+      });
+      
       // Store token if returned
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        console.log('Token stored in localStorage');
+      } else {
+        console.warn('No token received from server');
       }
       return response.data;
     } catch (error) {
-      console.error('Login error:', error.response?.data || error.message);
+      console.error('Login API error:', error);
+      
+      if (error.response) {
+        console.error('Server response:', {
+          status: error.response.status,
+          data: error.response.data
+        });
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Error setting up request:', error.message);
+      }
+      
       throw error;
     }
   },
@@ -71,6 +125,8 @@ export const authAPI = {
   // Logout
   logout: () => {
     localStorage.removeItem('token');
+    // 不删除localStorage中保存的email，以便下次登录时自动填充
+    console.log('用户已退出登录，但保留了记住的邮箱');
   }
 };
 

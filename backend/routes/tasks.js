@@ -211,12 +211,16 @@ router.post('/', auth, async (req, res) => {
     
     // Fix timezone issue - process deadline to preserve user's selected date
     let deadlineDate = new Date(deadline);
-    // Use ISO string to create new date, fixed at noon 12:00, avoiding timezone issues
-    const deadlineYear = deadlineDate.getFullYear();
-    const deadlineMonth = deadlineDate.getMonth() + 1; // Month needs +1 to get real month (1-12)
-    const deadlineDay = deadlineDate.getDate();
-    const deadlineDateStr = `${deadlineYear}-${deadlineMonth.toString().padStart(2, '0')}-${deadlineDay.toString().padStart(2, '0')}T12:00:00.000Z`;
-    deadlineDate = new Date(deadlineDateStr);
+    try {
+      // 直接处理日期字符串，避免时区转换问题
+      // 假设deadline以YYYY-MM-DD格式提供
+      const deadlineDateStr = deadline.split('T')[0] + 'T12:00:00.000Z';
+      deadlineDate = new Date(deadlineDateStr);
+      console.log('处理后的deadline日期:', deadlineDateStr, '，转换为Date后:', deadlineDate);
+    } catch (error) {
+      console.error('处理deadline日期出错:', error);
+      deadlineDate = new Date(deadline);
+    }
     
     // Get today's date (removing time part)
     const now = new Date();
@@ -241,28 +245,24 @@ router.post('/', auth, async (req, res) => {
     // Fix start_time timezone issue, using the same approach as deadline
     let fixedStartTime = null;
     if (start_time && initialStatus !== 'Pending') {
-      // Process timezone issue, ensure date remains unchanged
-      let startTimeDate = new Date(start_time);
-      
-      // Fix timezone issue - use the exact date selected by user
-      const startYear = startTimeDate.getFullYear();
-      const startMonth = startTimeDate.getMonth() + 1; // Month needs +1 to get real month (1-12)
-      const startDay = startTimeDate.getDate();
-      
-      // Use ISO string to create new date, same approach as deadline
-      const startDateStr = `${startYear}-${startMonth.toString().padStart(2, '0')}-${startDay.toString().padStart(2, '0')}T12:00:00.000Z`;
-      fixedStartTime = new Date(startDateStr);
-      
-      console.log('Fixed start_time:', fixedStartTime);
+      try {
+        // 直接处理日期字符串，避免时区转换问题
+        const startTimeStr = start_time.split('T')[0] + 'T12:00:00.000Z';
+        fixedStartTime = new Date(startTimeStr);
+        console.log('处理后的start_time日期:', startTimeStr, '，转换为Date后:', fixedStartTime);
+      } catch (error) {
+        console.error('处理start_time日期出错:', error);
+        fixedStartTime = new Date(start_time);
+      }
     } else if (initialStatus === 'In Progress' && !start_time) {
       // If status is In Progress but no start_time provided, use current time
       const now = new Date();
       const year = now.getFullYear();
-      const month = now.getMonth() + 1; // Month needs +1 to get real month (1-12)
-      const day = now.getDate();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
       
-      // Use ISO string to create new date, same approach as deadline
-      const todayDateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T12:00:00.000Z`;
+      // 直接构造日期字符串
+      const todayDateStr = `${year}-${month}-${day}T12:00:00.000Z`;
       fixedStartTime = new Date(todayDateStr);
     }
     
@@ -314,13 +314,15 @@ router.put('/:id', auth, async (req, res) => {
     
     // Fix timezone issue - process deadline
     if (deadline) {
-      // Use ISO string to create new date, fixed at noon 12:00, avoiding timezone issues
-      let deadlineDate = new Date(deadline);
-      const deadlineYear = deadlineDate.getFullYear();
-      const deadlineMonth = deadlineDate.getMonth() + 1; // Month needs +1 to get real month (1-12)
-      const deadlineDay = deadlineDate.getDate();
-      const deadlineDateStr = `${deadlineYear}-${deadlineMonth.toString().padStart(2, '0')}-${deadlineDay.toString().padStart(2, '0')}T12:00:00.000Z`;
-      taskFields.deadline = new Date(deadlineDateStr);
+      try {
+        // 直接处理日期字符串，避免时区转换问题
+        const deadlineDateStr = deadline.split('T')[0] + 'T12:00:00.000Z';
+        taskFields.deadline = new Date(deadlineDateStr);
+        console.log('更新时处理后的deadline日期:', deadlineDateStr, '，转换为Date后:', taskFields.deadline);
+      } catch (error) {
+        console.error('更新时处理deadline日期出错:', error);
+        taskFields.deadline = new Date(deadline);
+      }
     }
     
     // Fix start_time processing logic, using the same approach as deadline
@@ -333,19 +335,15 @@ router.put('/:id', auth, async (req, res) => {
           taskFields.start_time = null;
           console.log('Setting start_time to null for Pending status');
         } else if (start_time) {
-          // Process start_time timezone issue, same approach as deadline
-          let startTimeDate = new Date(start_time);
-          
-          // Fix timezone issue - use the exact date selected by user, unaffected by timezone
-          const startYear = startTimeDate.getFullYear();
-          const startMonth = startTimeDate.getMonth() + 1; // Month needs +1 to get real month (1-12)
-          const startDay = startTimeDate.getDate();
-          
-          // Use ISO string to create new date, same approach as deadline
-          const startDateStr = `${startYear}-${startMonth.toString().padStart(2, '0')}-${startDay.toString().padStart(2, '0')}T12:00:00.000Z`;
-          taskFields.start_time = new Date(startDateStr);
-          
-          console.log('New start_time set to:', taskFields.start_time);
+          try {
+            // 直接处理日期字符串，避免时区转换问题
+            const startTimeStr = start_time.split('T')[0] + 'T12:00:00.000Z';
+            taskFields.start_time = new Date(startTimeStr);
+            console.log('更新时处理后的start_time日期:', startTimeStr, '，转换为Date后:', taskFields.start_time);
+          } catch (error) {
+            console.error('更新时处理start_time日期出错:', error);
+            taskFields.start_time = new Date(start_time);
+          }
         } else {
           // If explicitly set to null and status is not Pending
           console.log('Warning: Setting start_time to null for non-Pending task');
@@ -485,14 +483,12 @@ router.put('/batch-update/status', auth, async (req, res) => {
         const task = await Task.findById(taskId);
         // Only set start_time if changing from a status that's not In Progress
         if (task.status !== 'In Progress') {
-          // Fix timezone issue - use ISO string to create new date, same approach as deadline
-          const currentDate = new Date();
-          const year = currentDate.getFullYear();
-          const month = currentDate.getMonth() + 1; // Month needs +1 to get real month (1-12)
-          const day = currentDate.getDate();
-          
-          // Use ISO string to create new date, same approach as deadline
-          const todayDateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T12:00:00.000Z`;
+          // 直接构造日期字符串
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = (now.getMonth() + 1).toString().padStart(2, '0');
+          const day = now.getDate().toString().padStart(2, '0');
+          const todayDateStr = `${year}-${month}-${day}T12:00:00.000Z`;
           const fixedDate = new Date(todayDateStr);
           
           await Task.updateOne(

@@ -18,7 +18,7 @@ const Task = require('./models/Task');
 
 const app = express();
 
-// Enhanced CORS configuration
+// Enhanced CORS configuration with local development support
 app.use(cors({
   origin: ['https://todo-frontend-nine-khaki.vercel.app', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
