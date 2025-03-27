@@ -212,13 +212,13 @@ router.post('/', auth, async (req, res) => {
     // Fix timezone issue - process deadline to preserve user's selected date
     let deadlineDate = new Date(deadline);
     try {
-      // 直接处理日期字符串，避免时区转换问题
-      // 假设deadline以YYYY-MM-DD格式提供
+      // Process date string directly to avoid timezone conversion issues
+      // Assuming deadline is provided in YYYY-MM-DD format
       const deadlineDateStr = deadline.split('T')[0] + 'T12:00:00.000Z';
       deadlineDate = new Date(deadlineDateStr);
-      console.log('处理后的deadline日期:', deadlineDateStr, '，转换为Date后:', deadlineDate);
+      console.log('Processed deadline date:', deadlineDateStr, ', converted to Date:', deadlineDate);
     } catch (error) {
-      console.error('处理deadline日期出错:', error);
+      console.error('Error processing deadline date:', error);
       deadlineDate = new Date(deadline);
     }
     
@@ -246,12 +246,12 @@ router.post('/', auth, async (req, res) => {
     let fixedStartTime = null;
     if (start_time && initialStatus !== 'Pending') {
       try {
-        // 直接处理日期字符串，避免时区转换问题
+        // Process date string directly to avoid timezone conversion issues
         const startTimeStr = start_time.split('T')[0] + 'T12:00:00.000Z';
         fixedStartTime = new Date(startTimeStr);
-        console.log('处理后的start_time日期:', startTimeStr, '，转换为Date后:', fixedStartTime);
+        console.log('Processed start_time date:', startTimeStr, ', converted to Date:', fixedStartTime);
       } catch (error) {
-        console.error('处理start_time日期出错:', error);
+        console.error('Error processing start_time date:', error);
         fixedStartTime = new Date(start_time);
       }
     } else if (initialStatus === 'In Progress' && !start_time) {
@@ -261,7 +261,7 @@ router.post('/', auth, async (req, res) => {
       const month = (now.getMonth() + 1).toString().padStart(2, '0');
       const day = now.getDate().toString().padStart(2, '0');
       
-      // 直接构造日期字符串
+      // Create date string directly
       const todayDateStr = `${year}-${month}-${day}T12:00:00.000Z`;
       fixedStartTime = new Date(todayDateStr);
     }
@@ -315,12 +315,12 @@ router.put('/:id', auth, async (req, res) => {
     // Fix timezone issue - process deadline
     if (deadline) {
       try {
-        // 直接处理日期字符串，避免时区转换问题
+        // Process date string directly to avoid timezone conversion issues
         const deadlineDateStr = deadline.split('T')[0] + 'T12:00:00.000Z';
         taskFields.deadline = new Date(deadlineDateStr);
-        console.log('更新时处理后的deadline日期:', deadlineDateStr, '，转换为Date后:', taskFields.deadline);
+        console.log('Update processed deadline date:', deadlineDateStr, ', converted to Date:', taskFields.deadline);
       } catch (error) {
-        console.error('更新时处理deadline日期出错:', error);
+        console.error('Error processing deadline date during update:', error);
         taskFields.deadline = new Date(deadline);
       }
     }
@@ -336,12 +336,12 @@ router.put('/:id', auth, async (req, res) => {
           console.log('Setting start_time to null for Pending status');
         } else if (start_time) {
           try {
-            // 直接处理日期字符串，避免时区转换问题
+            // Process date string directly to avoid timezone conversion issues
             const startTimeStr = start_time.split('T')[0] + 'T12:00:00.000Z';
             taskFields.start_time = new Date(startTimeStr);
-            console.log('更新时处理后的start_time日期:', startTimeStr, '，转换为Date后:', taskFields.start_time);
+            console.log('Processed start_time date:', startTimeStr, ', converted to Date:', taskFields.start_time);
           } catch (error) {
-            console.error('更新时处理start_time日期出错:', error);
+            console.error('Error processing start_time date:', error);
             taskFields.start_time = new Date(start_time);
           }
         } else {
@@ -483,7 +483,7 @@ router.put('/batch-update/status', auth, async (req, res) => {
         const task = await Task.findById(taskId);
         // Only set start_time if changing from a status that's not In Progress
         if (task.status !== 'In Progress') {
-          // 直接构造日期字符串
+          // Create date string directly
           const now = new Date();
           const year = now.getFullYear();
           const month = (now.getMonth() + 1).toString().padStart(2, '0');

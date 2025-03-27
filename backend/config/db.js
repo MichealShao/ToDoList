@@ -14,12 +14,12 @@ const connectDB = async () => {
     console.log('Connection string exists:', !!process.env.MONGODB_URI);
     console.log('NODE_ENV:', process.env.NODE_ENV);
     
-    // 设置mongoose全局配置 - 简化设置
+    // Set mongoose global configuration - simplified setup
     mongoose.set('strictQuery', false);
     
-    // 简化连接选项
+    // Simplified connection options
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 60000, // 增加到60秒
+      serverSelectionTimeoutMS: 60000, // Increased to 60 seconds
       connectTimeoutMS: 60000
     });
 
@@ -30,7 +30,7 @@ const connectDB = async () => {
     console.log('Models:', Object.keys(mongoose.models));
     console.log('==============================');
 
-    // 监听连接事件
+    // Monitor connection events
     mongoose.connection.on('connected', () => {
       console.log('Mongoose connected to MongoDB');
     });
@@ -57,7 +57,7 @@ const connectDB = async () => {
     if (process.env.NODE_ENV === 'production') {
       console.error('Connection error in production, retrying in 5 seconds...');
       return new Promise((resolve) => {
-        setTimeout(() => resolve(connectDB()), 5000); // 5秒后重试
+        setTimeout(() => resolve(connectDB()), 5000); // Retry after 5 seconds
       });
     } else {
       process.exit(1);

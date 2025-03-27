@@ -11,22 +11,22 @@ import { Login } from './components/auth/Login';
 import { SignUp } from './components/auth/SignUp';
 import TodoList from './components/todo/TodoList';
 
-// 添加React Router v7的future flags
+// Add React Router v7 future flags
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route>
       <Route path="/" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       
-      {/* 待办父路由 */}
+      {/* Todo parent route */}
       <Route path="/todolist" element={<TodoLayout />}>
-        {/* 默认子路由：查看待办列表 */}
+        {/* Default child route: view todo list */}
         <Route index element={<TodoList />} />
       </Route>
     </Route>
   ),
   {
-    // 添加future flags来消除警告
+    // Add future flags to eliminate warnings
     future: {
       v7_startTransition: true,
       v7_relativeSplatPath: true
@@ -35,13 +35,13 @@ const router = createBrowserRouter(
 );
 
 function App() {
-  // 使用新的RouterProvider代替Router
+  // Use new RouterProvider instead of Router
   return <RouterProvider router={router} />;
 }
 
 /**
- * 父层布局组件：可在这里做一些共同布局，比如标题栏等
- * <Outlet /> 负责渲染子路由对应的内容
+ * Parent layout component: can add common layout elements like headers
+ * <Outlet /> renders the content of child routes
  */
 function TodoLayout() {
   return (

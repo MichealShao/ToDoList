@@ -1,4 +1,4 @@
-// 独立的健康检查API
+// Independent healthcheck API
 const mongoose = require('mongoose');
 
 module.exports = async (req, res) => {
@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
     console.log('NODE_ENV:', process.env.NODE_ENV);
     console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
 
-    // 数据库连接测试
+    // Database connection test
     if (process.env.MONGODB_URI) {
       console.log('Testing direct MongoDB connection...');
       
@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
           }
         };
         
-        // 关闭连接
+        // Close connection
         await mongoose.connection.close();
         console.log('Connection test completed successfully');
         

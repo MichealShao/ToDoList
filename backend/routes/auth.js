@@ -10,13 +10,13 @@ router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // 基本验证
+    // Basic validation
     if (!username || !email || !password) {
       console.log('Missing required fields');
       return res.status(400).json({ msg: 'Please enter all fields' });
     }
 
-    // 检查用户是否存在
+    // Check if user exists
     console.log('Checking for existing user...');
     const existingUser = await User.findOne({ email }).select('email');
     
@@ -25,17 +25,17 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ msg: 'User already exists' });
     }
 
-    // 创建新用户
+    // Create new user
     console.log('Creating new user object...');
     const newUser = new User({ username, email });
     newUser.password = newUser.hashPassword(password);
 
-    // 保存用户
+    // Save user
     console.log('Saving user to database...');
     const savedUser = await newUser.save();
     console.log('User saved successfully');
 
-    // 生成token
+    // Generate token
     console.log('Generating token...');
     const token = jwt.sign(
       { user: { id: savedUser.id } },
@@ -53,12 +53,12 @@ router.post('/register', async (req, res) => {
       stack: err.stack
     });
 
-    // MongoDB 重复键错误
+    // MongoDB duplicate key error
     if (err.code === 11000) {
       return res.status(400).json({ msg: 'User already exists' });
     }
 
-    // 其他错误
+    // Other errors
     return res.status(500).json({
       msg: 'Server error during registration',
       error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
@@ -73,13 +73,13 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 基本验证
+    // Basic validation
     if (!email || !password) {
       console.log('Missing required fields');
       return res.status(400).json({ msg: 'Please enter all fields' });
     }
 
-    // 查找用户
+    // Find user
     console.log('Finding user...');
     const user = await User.findOne({ email });
     
@@ -88,14 +88,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
-    // 验证密码
+    // Validate password
     console.log('Verifying password...');
     if (!user.validatePassword(password)) {
       console.log('Invalid password');
       return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
-    // 生成token
+    // Generate token
     console.log('Generating token...');
     const token = jwt.sign(
       { user: { id: user.id } },

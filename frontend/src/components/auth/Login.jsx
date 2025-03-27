@@ -14,7 +14,7 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // 页面加载时检查localStorage是否有保存的email
+  // Check localStorage for saved email on page load
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
     if (savedEmail) {
@@ -40,36 +40,36 @@ export const Login = () => {
     setLoading(true);
     
     try {
-      console.log('登录尝试, 使用凭证:', { 
+      console.log('Login attempt, using credentials:', { 
         email: formData.email, 
         password: 'HIDDEN' 
       });
       
-      // 只使用email登录
+      // Only use email for login
       const response = await authAPI.login({ 
         email: formData.email, 
         password: formData.password 
       });
       
-      console.log('登录成功, 收到响应:', { 
+      console.log('Login successful, received response:', { 
         token: response.token ? 'JWT_TOKEN_RECEIVED' : 'NO_TOKEN' 
       });
       
-      // 如果用户勾选了"记住我"，则保存email到localStorage
+      // If "Remember me" is checked, save email to localStorage
       if (formData.rememberMe) {
         localStorage.setItem('rememberedEmail', formData.email);
-        console.log('Email已保存到localStorage:', formData.email);
+        console.log('Email saved to localStorage:', formData.email);
       } else {
         localStorage.removeItem('rememberedEmail');
-        console.log('已清除localStorage中保存的Email');
+        console.log('Removed saved email from localStorage');
       }
       
       navigate('/todolist');
     } catch (err) {
-      console.error('登录错误:', err);
+      console.error('Login error:', err);
       
       if (err.response) {
-        console.error('服务器响应:', { 
+        console.error('Server response:', { 
           status: err.response.status,
           data: err.response.data 
         });
@@ -78,13 +78,13 @@ export const Login = () => {
       setLoading(false);
       
       if (err.response && err.response.status === 401) {
-        setError('邮箱或密码不正确，请重试。');
+        setError('Incorrect email or password. Please try again.');
       } else if (err.response && err.response.status === 400) {
-        setError('请输入有效的邮箱和密码。');
+        setError('Please enter a valid email and password.');
       } else if (err.message === 'Network Error') {
-        setError('无法连接到服务器，请检查您的网络连接。');
+        setError('Unable to connect to the server. Please check your network connection.');
       } else {
-        setError('当前无法登录，请稍后再试。');
+        setError('Cannot log in at this time. Please try again later.');
       }
     }
   };
@@ -93,22 +93,22 @@ export const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1 className="auth-title">登录账户</h1>
-          <p className="auth-subtitle">请输入您的登录信息</p>
+          <h1 className="auth-title">Log In</h1>
+          <p className="auth-subtitle">Please enter your login information</p>
         </div>
         
         {error && <div className="auth-error">{error}</div>}
         
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label" htmlFor="email">邮箱</label>
+            <label className="form-label" htmlFor="email">Email</label>
             <div className="form-input-container">
               <input
                 id="email"
                 type="email"
                 name="email"
                 className="form-input"
-                placeholder="您的邮箱地址"
+                placeholder="Your email address"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -117,7 +117,7 @@ export const Login = () => {
           </div>
           
           <div className="form-group">
-            <label className="form-label" htmlFor="password">密码</label>
+            <label className="form-label" htmlFor="password">Password</label>
             <div className="form-input-container">
               <input
                 id="password"
@@ -134,7 +134,7 @@ export const Login = () => {
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? "隐藏" : "显示"}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
@@ -148,7 +148,7 @@ export const Login = () => {
               checked={formData.rememberMe}
               onChange={handleChange}
             />
-            <label htmlFor="remember">记住我</label>
+            <label htmlFor="remember">Remember me</label>
           </div>
           
           <button 
@@ -156,19 +156,19 @@ export const Login = () => {
             className="auth-button"
             disabled={loading}
           >
-            {loading ? '登录中...' : '登录'}
+            {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
         
         <div className="auth-footer">
-          还没有账户？{" "}
+          Don't have an account?{" "}
           <Link 
             to={{
               pathname: "/signup",
-              // 由于React Router v6不再支持location state传递，改用URL参数
+              // React Router v6 no longer supports location state, use URL params instead
             }}
             onClick={() => {
-              // 使用sessionStorage暂时存储登录表单数据，以便注册页面可以使用
+              // Temporarily store login form data in sessionStorage for the signup page
               if (formData.email || formData.password) {
                 sessionStorage.setItem('loginFormData', JSON.stringify({
                   email: formData.email,
@@ -178,7 +178,7 @@ export const Login = () => {
             }}
             className="auth-link"
           >
-            注册
+            Sign Up
           </Link>
         </div>
       </div>

@@ -107,8 +107,8 @@ const updateExpiredTasks = async () => {
   }
 };
 
-// 为保证在Vercel环境中有一个数据库连接
-// 在模块作用域中直接调用连接函数
+// For ensuring a database connection in Vercel environment
+// Directly call the connection function in module scope
 if (process.env.VERCEL) {
   console.log('In Vercel environment, connecting to database...');
   connectDB()
@@ -120,20 +120,20 @@ if (process.env.VERCEL) {
     });
 }
 
-// 条件启动服务器（仅在非Vercel环境下）
+// Conditionally start server (only in non-Vercel environment)
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5001;
   
   const startServer = async () => {
     try {
-      // 先连接数据库
+      // Connect to database first
       await connectDB();
       
-      // 启动服务器
+      // Start server
       const server = app.listen(PORT, () => {
         console.log(`Server started on port: ${PORT}`);
         
-        // 运行定时任务
+        // Run scheduled tasks
         updateExpiredTasks();
         setInterval(updateExpiredTasks, 60 * 60 * 1000);
       });
@@ -142,18 +142,18 @@ if (!process.env.VERCEL) {
       const shutdown = async () => {
         console.log('Received shutdown signal');
         
-        // 关闭服务器
+        // Close server
         server.close(() => {
           console.log('Server closed');
           
-          // 关闭数据库连接
+          // Close database connection
           mongoose.connection.close(false, () => {
             console.log('MongoDB connection closed');
             process.exit(0);
           });
         });
   
-        // 如果5秒内没有正常关闭，强制退出
+        // Force exit if not closed within 5 seconds
         setTimeout(() => {
           console.error('Could not close connections in time, forcefully shutting down');
           process.exit(1);
@@ -172,5 +172,5 @@ if (!process.env.VERCEL) {
   startServer();
 }
 
-// 为Vercel导出Express应用实例
+// Export Express app instance for Vercel
 module.exports = app;
