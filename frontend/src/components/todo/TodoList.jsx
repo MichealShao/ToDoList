@@ -1068,7 +1068,7 @@ function TodoList() {
                               {task.priority}
                             </span>
                             <span className={`status-badge status-${(task.status || 'pending').toLowerCase().replace(' ', '-')}`}>
-                              {task.status || 'Pending'}
+                              {task.status === 'Pending' ? 'To Do' : task.status}
                             </span>
                             <span className="task-hours">
                               <i className="fas fa-clock" style={{marginRight: '4px'}}></i>
@@ -1177,7 +1177,7 @@ function TodoList() {
                                 task.status === 'In Progress' ? 'bg-primary' :
                                 task.status === 'Expired' ? 'bg-secondary' : 'bg-warning text-dark'
                               }`}>
-                                {task.status}
+                                {task.status === 'Pending' ? 'To Do' : task.status}
                               </span>
                             </td>
                             <td className="text-center">{formatDate(task.deadline)}</td>
