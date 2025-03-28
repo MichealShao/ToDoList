@@ -604,6 +604,13 @@ function TodoList() {
         return;
       }
       
+      // Validate that In Progress and Completed tasks must have a start time
+      if ((formData.status === 'In Progress' || formData.status === 'Completed') && !formData.startTime) {
+        setError(`Start Time is required for ${formData.status} tasks. Please select a start time.`);
+        setIsProcessing(false);
+        return;
+      }
+      
       // Only validate that start time is not after deadline if both are set
       if (formData.startTime && formData.deadline && formData.startTime > formData.deadline) {
         setError('Start Time cannot be later than Deadline. Please adjust the dates.');
@@ -650,12 +657,16 @@ function TodoList() {
         closeEditModal();
       } else {
         // Add mode
+        // Process deadline for new task
+        const processedDeadline = taskData.deadline;
+        const isDeadlineToday = isDateToday(formData.deadline);
+
         const taskWithCreatedAt = {
           ...taskData,
           // Use standardized date format in ISO format for MongoDB
-          deadline: taskData.deadline, // Already converted to ISO format
+          deadline: processedDeadline, // Already converted to ISO format
           // Let MongoDB set default createdAt
-          createdAt: new Date().toISOString()
+          createdAt: isDeadlineToday ? processedDeadline : new Date().toISOString()
         };
         
         const newTask = await tasksAPI.createTask(taskWithCreatedAt);
@@ -1163,16 +1174,6 @@ function TodoList() {
                             }></i>
                         </th>
                         <th className="text-center">Est. Hours</th>
-                        <th className="sortable text-center" onClick={() => sortBy("createdAt")}>
-                          Create Time
-                          <i className={`fas ${sortOptions.sortField === 'createdAt' 
-                            ? (sortOptions.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down') 
-                            : 'fa-sort'}`} title={
-                              sortOptions.sortField === 'createdAt' 
-                                ? (sortOptions.sortDirection === 'asc' ? 'Click for descending order' : 'Click to cancel sorting') 
-                                : 'Click for ascending order'
-                            }></i>
-                        </th>
                         <th className="text-center">Details</th>
                         <th className="actions-header text-center">Actions</th>
                       </tr>
@@ -1203,7 +1204,6 @@ function TodoList() {
                             <td className="text-center">{formatDate(task.deadline)}</td>
                             <td className="text-center">{task.startTime ? formatDate(task.startTime) : "None"}</td>
                             <td className="text-center">{task.hours}h</td>
-                            <td className="text-center">{new Date(task.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</td>
                             <td className="text-start text-truncate" style={{ maxWidth: "150px" }}>
                               {task.details.length > 30 
                                 ? `${task.details.substring(0, 30)}...` 
@@ -1349,7 +1349,7 @@ function TodoList() {
                   </div>
                   <div className="mb-3">
                     <label htmlFor="updateStartTime" className="form-label fw-bold">
-                      Start Time {formData.status === 'Pending' && <span className="text-danger">*</span>}
+                      Start Time {(formData.status === 'In Progress' || formData.status === 'Completed') && <span className="text-danger">*</span>}
                     </label>
                     <input
                       type="date"
@@ -1378,9 +1378,12 @@ function TodoList() {
                       disabled={false} // Enable for all status types
                       // No minimum date value - allow past dates
                       max={formData.deadline || undefined}
+                      required={formData.status === 'In Progress' || formData.status === 'Completed'}
                     />
                     <small className="text-muted">
-                      Start time must be on or before the deadline.
+                      {formData.status === 'Pending' 
+                        ? "Optional for Pending tasks. Start time must be on or before the deadline." 
+                        : "Required for In Progress and Completed tasks. Must be on or before the deadline."}
                     </small>
                   </div>
                   <div className="mb-3">
@@ -1557,14 +1560,6 @@ function TodoList() {
                     ></textarea>
                   </div>
                   <div className="mb-3">
-                    <label className="form-label fw-bold">Created At</label>
-                    <input
-                      type="text"
-                      value={formatDate(viewingTask.createdAt)}
-                      className="form-control bg-light"
-                      readOnly
-                    />
-                  </div>
                 </div>
               </div>
               <div className="modal-footer">

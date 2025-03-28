@@ -191,14 +191,14 @@ export const tasksAPI = {
   // Create new task
   createTask: async (taskData) => {
     try {
-      // Ensure date format is correct and map startTime to start_time
+      // Ensure date format is correct and add UTC time conversion
       const normalizedTask = {
         ...taskData,
-        deadline: taskData.deadline,
-        start_time: taskData.startTime, // Map field
+        deadline: taskData.deadline,  // Frontend has already processed into correct UTC format
+        start_time: taskData.startTime, // Frontend has already processed into correct UTC format
         // Don't include startTime field to avoid redundancy
         startTime: undefined,
-        createdAt: taskData.createdAt || new Date().toISOString().split('T')[0]
+        createdAt: taskData.createdAt // Frontend has already processed into correct UTC format
       };
       
       console.log('Sending data to API:', normalizedTask);
@@ -220,11 +220,11 @@ export const tasksAPI = {
   // Update task
   updateTask: async (taskId, taskData) => {
     try {
-      // Ensure date format is correct and map startTime to start_time
+      // Ensure date format is correct and add UTC time conversion
       const normalizedTask = {
         ...taskData,
-        deadline: taskData.deadline,
-        start_time: taskData.startTime, // Map field
+        deadline: taskData.deadline, // Frontend has already processed into correct UTC format
+        start_time: taskData.startTime, // Frontend has already processed into correct UTC format
         // Don't include startTime field to avoid redundancy
         startTime: undefined
       };
