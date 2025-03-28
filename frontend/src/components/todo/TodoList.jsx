@@ -784,13 +784,6 @@ function TodoList() {
   const filteredAndSortedTasks = useMemo(() => {
     if (!tasks || tasks.length === 0) return [];
     
-    // Use local timezone to get today's date, not UTC
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0); // Set to start of day
-    
-    // Get today's date string for comparison
-    const todayStr = getTodayDateString();
-    
     // First copy the array to avoid direct modification of the original
     return [...tasks]
       // First mark expired tasks
@@ -844,26 +837,23 @@ function TodoList() {
         if (aIsInactive && !bIsInactive) return 1;  // a goes to the bottom
         if (!aIsInactive && bIsInactive) return -1; // b goes to the bottom
         
-        // If both are inactive or both are active, then sort by the current sort field
-        if (aIsInactive === bIsInactive) {
-          if (sortOptions.sortField) {
-            const aValue = a[sortOptions.sortField];
-            const bValue = b[sortOptions.sortField];
-            
-            // Handle different types of values
-            if (aValue === bValue) return 0;
-            if (aValue === undefined || aValue === null) return 1;
-            if (bValue === undefined || bValue === null) return -1;
-            
-            // Return comparison result based on sort direction
-            const direction = sortOptions.sortDirection === 'asc' ? 1 : -1;
-            return aValue < bValue ? -1 * direction : 1 * direction;
-          }
+        // If both are inactive, sort by due date in descending order
+        if (aIsInactive && bIsInactive) {
+          const aDate = a.deadline || '';
+          const bDate = b.deadline || '';
+          return bDate.localeCompare(aDate);
+        }
+        
+        // If both are active, sort by ID in descending order
+        if (!aIsInactive && !bIsInactive) {
+          const aId = parseInt(a.displayId || '0', 10);
+          const bId = parseInt(b.displayId || '0', 10);
+          return bId - aId;
         }
         
         return 0;
       });
-  }, [tasks, sortOptions.sortField, sortOptions.sortDirection, searchQuery, filters]);
+  }, [tasks, searchQuery, filters]);
 
   // Calculate today's todo count after filteredAndSortedTasks memo
   const todayTodoCount = useMemo(() => {
@@ -944,7 +934,7 @@ function TodoList() {
             <div className="stat-item">
               <i className="fas fa-calendar-day stat-icon"></i>
               <div className="stat-content">
-                <span className="stat-label">Today's Tasks</span>
+                <span className="stat-label">Tasks for Today</span>
                 <span className="stat-value">{todayTodoCount}</span>
               </div>
             </div>
@@ -992,7 +982,7 @@ function TodoList() {
                 className={`calendar-button ${showCalendar ? 'active' : ''}`}
               >
                 <i className="fas fa-calendar-alt"></i>
-                <span className="d-none d-md-inline">Daily Deadlines</span>
+                <span className="d-none d-md-inline">Calendar View</span>
               </button>
               
               <div className="filter-select-container">
@@ -1002,9 +992,9 @@ function TodoList() {
                   className="filter-select"
                 >
                   <option value="">Status (All)</option>
-                  <option value="Pending">Pending</option>
+                  <option value="Pending">To Do</option>
                   <option value="In Progress">In Progress</option>
-                  <option value="Completed">Completed</option>
+                  <option value="Completed">Done</option>
                   <option value="Expired">Expired</option>
                 </select>
                 <i className="fas fa-filter filter-icon"></i>
@@ -1027,9 +1017,9 @@ function TodoList() {
               <button 
                 onClick={resetFilters}
                 className="reset-button"
-                title="Reset sorting and filtering"
+                title="Clear all filters"
               >
-                <i className="fas fa-redo-alt"></i> <span className="d-none d-md-inline">Reset</span>
+                <i className="fas fa-redo-alt"></i> <span className="d-none d-md-inline">Clear Filters</span>
               </button>
             </div>
           </div>
@@ -1163,17 +1153,7 @@ function TodoList() {
                             }></i>
                         </th>
                         <th className="text-center">Est. Hours</th>
-                        <th className="sortable text-center" onClick={() => sortBy("createdAt")}>
-                          Create Time
-                          <i className={`fas ${sortOptions.sortField === 'createdAt' 
-                            ? (sortOptions.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down') 
-                            : 'fa-sort'}`} title={
-                              sortOptions.sortField === 'createdAt' 
-                                ? (sortOptions.sortDirection === 'asc' ? 'Click for descending order' : 'Click to cancel sorting') 
-                                : 'Click for ascending order'
-                            }></i>
-                        </th>
-                        <th className="text-center">Details</th>
+                        <th className="text-center">Description</th>
                         <th className="actions-header text-center">Actions</th>
                       </tr>
                     </thead>
@@ -1203,7 +1183,6 @@ function TodoList() {
                             <td className="text-center">{formatDate(task.deadline)}</td>
                             <td className="text-center">{task.startTime ? formatDate(task.startTime) : "None"}</td>
                             <td className="text-center">{task.hours}h</td>
-                            <td className="text-center">{new Date(task.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</td>
                             <td className="text-start text-truncate" style={{ maxWidth: "150px" }}>
                               {task.details.length > 30 
                                 ? `${task.details.substring(0, 30)}...` 
@@ -1339,9 +1318,9 @@ function TodoList() {
                       }
                       className="form-select"
                     >
-                      <option value="Pending">Pending</option>
+                      <option value="Pending">To Do</option>
                       <option value="In Progress">In Progress</option>
-                      <option value="Completed">Completed</option>
+                      <option value="Completed">Done</option>
                     </select>
                     <small className="form-text text-muted">
                       Select the current status of the task.
@@ -1349,7 +1328,7 @@ function TodoList() {
                   </div>
                   <div className="mb-3">
                     <label htmlFor="updateStartTime" className="form-label fw-bold">
-                      Start Time {formData.status === 'Pending' && <span className="text-danger">*</span>}
+                      Start Date {formData.status !== 'Pending' && <span className="text-danger">*</span>}
                     </label>
                     <input
                       type="date"
@@ -1357,15 +1336,11 @@ function TodoList() {
                       id="updateStartTime"
                       value={formData.startTime || ''}
                       onChange={(e) => {
-                        // When Start Time changes, it may need to adjust Deadline
                         const newStartTime = e.target.value;
-                        
-                        // If selected date is today, immediately convert to UTC format of today
                         const today = getTodayDateString();
                         const processedStartTime = newStartTime === today ? today : newStartTime;
                         
                         if (processedStartTime && formData.deadline && processedStartTime > formData.deadline) {
-                          // If new start time is later than deadline, update deadline to start time
                           setFormData({ 
                             ...formData, 
                             startTime: processedStartTime, 
@@ -1375,17 +1350,16 @@ function TodoList() {
                           setFormData({ ...formData, startTime: processedStartTime });
                         }
                       }}
-                      disabled={false} // Enable for all status types
-                      // No minimum date value - allow past dates
+                      required={formData.status !== 'Pending'}
                       max={formData.deadline || undefined}
                     />
                     <small className="text-muted">
-                      Start time must be on or before the deadline.
+                      Start Date must be on or before Due Date.
                     </small>
                   </div>
                   <div className="mb-3">
                     <label htmlFor="updateDeadline" className="form-label fw-bold">
-                      Deadline <span className="text-danger">*</span>
+                      Due Date <span className="text-danger">*</span>
                     </label>
                     <input
                       type="date"
@@ -1393,24 +1367,18 @@ function TodoList() {
                       id="updateDeadline"
                       value={formData.deadline || ''}
                       onChange={(e) => {
-                        // When Deadline changes, it may need to adjust Start Time
                         const newDeadline = e.target.value;
-                        
-                        // If selected date is today, immediately convert to UTC format of today
                         const today = getTodayDateString();
                         const processedDeadline = newDeadline === today ? today : newDeadline;
                         
                         if (formData.startTime && formData.startTime > processedDeadline) {
-                          // If start time is later than new deadline, clear start time
                           if (formData.status === 'In Progress' || formData.status === 'Completed') {
-                            // If status requires start time, set start time to deadline
                             setFormData({ 
                               ...formData, 
                               deadline: processedDeadline, 
                               startTime: processedDeadline 
                             });
                           } else {
-                            // Otherwise clear start time
                             setFormData({ 
                               ...formData, 
                               deadline: processedDeadline, 
@@ -1421,7 +1389,6 @@ function TodoList() {
                           setFormData({ ...formData, deadline: processedDeadline });
                         }
                       }}
-                      // No minimum date restriction
                       required
                     />
                   </div>
@@ -1442,7 +1409,7 @@ function TodoList() {
                   </div>
                   <div className="mb-3">
                     <label className="form-label">
-                      Details <span className="text-danger">*</span>
+                      Description <span className="text-danger">*</span>
                     </label>
                     <textarea
                       value={formData.details}
